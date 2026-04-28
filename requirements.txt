@@ -1,8 +1,0 @@
-geopandas>=0.14
-pandas>=2.0
-numpy>=1.24
-shapely>=2.0
-requests>=2.31
-osmnx>=1.9
-pyproj>=3.6
-fiona>=1.9
