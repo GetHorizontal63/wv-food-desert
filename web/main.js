@@ -5,7 +5,7 @@
    reader's scroll always belongs to the narrative.
    ===================================================================== */
 
-const BUNDLE_URL = "data/web_bundle.json";
+const BUNDLE_URL = "web/data/web_bundle.json";
 
 const COLORS = {
   orange: "#EAAA00",       
@@ -219,7 +219,7 @@ function buildLayers(b) {
 
       if (b.hillshade && b.hillshade.bounds) {
     layers.hillshade = L.imageOverlay(
-      "data/hillshade.png",
+      "web/data/hillshade.png",
       b.hillshade.bounds,
       { pane: "reliefPane", opacity: 1.0, interactive: false }
     ).addTo(map);
