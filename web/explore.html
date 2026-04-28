@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Explorer · WV Food Desert</title>
+  <meta name="description" content="Interactive explorer for the southern West Virginia food-access dataset." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="explore.css" />
+</head>
+<body class="explorer">
+
+  <header class="explore-topbar">
+    <div class="explore-title">
+      <span class="eyebrow">Interactive Explorer</span>
+      <h1>Drive distance to nearest supermarket · 2005 → 2025</h1>
+    </div>
+    <a class="explore-brand" href="index.html">
+      <span class="explore-brand-mark">↩</span>
+      <span class="explore-brand-text">Back to story</span>
+    </a>
+  </header>
+
+  <aside class="explore-panel" id="panel">
+    <section class="panel-section">
+      <h3>Snapshot year</h3>
+      <div class="seg" data-control="year">
+        <button data-val="2005">2005</button>
+        <button data-val="2010">2010</button>
+        <button data-val="2015">2015</button>
+        <button data-val="2020">2020</button>
+        <button data-val="2025" class="on">2025</button>
+      </div>
+      <p class="hint">Drives which grocer snapshot is shown and which year's low-access mask filters homes (when that mode is active).</p>
+    </section>
+
+    <section class="panel-section">
+      <h3>Color homes by</h3>
+      <div class="seg" data-control="colorMode">
+        <button data-val="delta" class="on">Δ 2005→2025</button>
+        <button data-val="d2005">Drive 2005</button>
+        <button data-val="d2025">Drive 2025</button>
+        <button data-val="lowAccess">Low-access (year)</button>
+      </div>
+    </section>
+
+    <section class="panel-section">
+      <h3>Filter homes</h3>
+      <label class="row">
+        <span>Direction</span>
+        <select id="ctl-direction">
+          <option value="all" selected>All</option>
+          <option value="worse">Worsened ≥ 0.5 mi</option>
+          <option value="better">Improved ≤ -0.5 mi</option>
+          <option value="flat">Roughly unchanged</option>
+        </select>
+      </label>
+      <label class="row">
+        <span>Setting</span>
+        <select id="ctl-setting">
+          <option value="all" selected>All homes</option>
+          <option value="rural">Rural only</option>
+          <option value="urban">Urban only</option>
+        </select>
+      </label>
+      <div class="row stack range-block">
+        <div class="range-label">
+          <span>Δ miles (2005 → 2025)</span>
+          <span class="range-readout">
+            <input type="number" id="ctl-delta-min-num" step="0.1" min="-20" max="20" value="-20" />
+            <span class="range-sep">to</span>
+            <input type="number" id="ctl-delta-max-num" step="0.1" min="-20" max="20" value="20" />
+          </span>
+        </div>
+        <div class="range-dual" data-control="deltaRange" data-min="-20" data-max="20" data-step="0.1">
+          <div class="range-track"></div>
+          <div class="range-fill"></div>
+          <input type="range" class="range-low"  min="-20" max="20" step="0.1" value="-20" />
+          <input type="range" class="range-high" min="-20" max="20" step="0.1" value="20" />
+        </div>
+        <div class="range-axis"><span>−20 (better)</span><span>0</span><span>+20 (worse)</span></div>
+      </div>
+      <div class="row stack range-block">
+        <div class="range-label">
+          <span>Drive miles to nearest supermarket (selected year)</span>
+          <span class="range-readout">
+            <input type="number" id="ctl-drive-min-num" step="0.1" min="0" max="60" value="0" />
+            <span class="range-sep">to</span>
+            <input type="number" id="ctl-drive-max-num" step="0.1" min="0" max="60" value="60" />
+          </span>
+        </div>
+        <div class="range-dual" data-control="driveRange" data-min="0" data-max="60" data-step="0.1">
+          <div class="range-track"></div>
+          <div class="range-fill"></div>
+          <input type="range" class="range-low"  min="0" max="60" step="0.1" value="0" />
+          <input type="range" class="range-high" min="0" max="60" step="0.1" value="60" />
+        </div>
+        <div class="range-axis"><span>0 mi</span><span>30</span><span>60+ mi</span></div>
+      </div>
+    </section>
+
+    <section class="panel-section">
+      <h3>Grocer store types</h3>
+      <label class="row check"><input type="checkbox" class="storeType" data-val="supermarket" checked /> Supermarket / Super store</label>
+      <label class="row check"><input type="checkbox" class="storeType" data-val="large" checked /> Large grocery</label>
+      <label class="row check"><input type="checkbox" class="storeType" data-val="medium" checked /> Medium grocery</label>
+      <label class="row check"><input type="checkbox" class="storeType" data-val="small" checked /> Small grocery</label>
+      <label class="row check"><input type="checkbox" class="storeType" data-val="combination" /> Combination / Other</label>
+    </section>
+  </aside>
+
+  <main class="explore-mapwrap">
+    <div id="map" role="region" aria-label="Southern West Virginia interactive map"></div>
+
+    <div class="map-overlay map-status" id="map-status">
+      <h3>Selection</h3>
+      <ul class="applied-filters" id="applied-filters"></ul>
+      <dl id="stats" class="status-stats">
+        <dt>Homes shown</dt><dd id="s-shown">—</dd>
+        <dt>Of total</dt><dd id="s-total">—</dd>
+        <dt>Median Δ</dt><dd id="s-median">—</dd>
+        <dt>≥ ½ mi worse</dt><dd id="s-worse">—</dd>
+        <dt>≤ ½ mi better</dt><dd id="s-better">—</dd>
+        <dt>Grocers (year)</dt><dd id="s-grocers">—</dd>
+      </dl>
+    </div>
+
+    <div class="map-overlay map-layers" id="map-layers">
+      <button type="button" class="map-overlay-toggle" id="map-layers-toggle" aria-expanded="false" aria-controls="map-layers-body">
+        <span class="map-overlay-toggle-label">Layers</span>
+        <span class="map-overlay-toggle-caret" aria-hidden="true">▾</span>
+      </button>
+      <div class="map-overlay-body" id="map-layers-body" hidden>
+        <label class="row check"><input type="checkbox" id="lyr-buildings" checked /> Residential homes</label>
+        <label class="row check"><input type="checkbox" id="lyr-grocers" checked /> Grocer pins (year)</label>
+        <label class="row check"><input type="checkbox" id="lyr-supermarkets" /> Supermarket halos (year)</label>
+        <label class="row check"><input type="checkbox" id="lyr-counties" checked /> County boundaries</label>
+        <label class="row check"><input type="checkbox" id="lyr-roads" /> Roads</label>
+        <label class="row check"><input type="checkbox" id="lyr-deserts" /> Food deserts (2025)</label>
+        <label class="row check"><input type="checkbox" id="lyr-deserts05" /> Food deserts (2005)</label>
+        <label class="row check"><input type="checkbox" id="lyr-snap" /> SNAP choropleth</label>
+        <label class="row check"><input type="checkbox" id="lyr-dollar" /> Dollar stores</label>
+        <label class="row check"><input type="checkbox" id="lyr-hillshade" checked /> Hillshade</label>
+      </div>
+    </div>
+
+    <div class="map-legend" id="map-legend">
+      <div id="explore-legend"></div>
+    </div>
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <script src="data/web_bundle.js"></script>
+  <script src="data/buildings_residential.js"></script>
+  <script src="explore.js"></script>
+</body>
+</html>

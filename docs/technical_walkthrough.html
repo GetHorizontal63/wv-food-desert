@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Technical Walkthrough – WV Food Desert</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <style>
+    :root {
+      --orange:     #EAAA00;
+      --orange-deep:#C99700;
+      --orange-dim: #8A6B00;
+      --cream:      #F4F1E8;
+      --cream-dim:  #BFC8D4;
+      --text-dark:  #001833;
+      --bg:         #001026;
+      --surface:    #002855;
+      --border:     rgba(234,170,0,0.34);
+      --panel-bg:   rgba(0,16,38,0.82);
+      --font-h1:    "Bahnschrift SemiBold","Segoe UI",system-ui,sans-serif;
+      --font-h2:    "Bahnschrift SemiCondensed","Segoe UI",system-ui,sans-serif;
+      --font-body:  "Bahnschrift Light","Segoe UI",system-ui,sans-serif;
+      --font-mono:  "JetBrains Mono","Fira Code",monospace;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; background: var(--bg); color: var(--cream); font-family: var(--font-body); line-height: 1.65; font-size: 15px; }
+
+    .map-bg { position: fixed; inset: 0; z-index: 0; }
+    #map-walkthrough { width: 100%; height: 100%; filter: saturate(0.95) contrast(1.05) grayscale(0.1); }
+
+    .card {
+      position: relative; z-index: 2;
+      max-width: 1394px; margin: 6vh auto; padding: 5vh 5vw;
+      background: var(--panel-bg);
+      border: 1px solid var(--border); border-radius: 4px;
+      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    }
+
+    .back-link, .back-link-bottom {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      color: var(--orange); text-decoration: none;
+      font-family: var(--font-h2);
+      font-size: 0.82rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+      transition: color 140ms;
+    }
+    .back-link { margin-bottom: 2.5rem; }
+    .back-link-bottom { margin-top: 3rem; }
+    .back-link:hover, .back-link-bottom:hover { color: var(--cream); }
+
+    h1 { font-family: var(--font-h1); font-size: clamp(1.8rem,4vw,2.4rem); font-weight: 700; letter-spacing: -0.01em; color: var(--orange); margin: 0 0 0.4rem; line-height: 1.1; }
+    .subtitle { font-family: var(--font-body); color: var(--cream-dim); font-size: 0.97rem; margin: 0 0 2.5rem; max-width: 58ch; }
+    h2 { font-family: var(--font-h2); font-size: 1.25rem; font-weight: 700; color: var(--orange); margin: 2.8rem 0 0.6rem; letter-spacing: 0; border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; }
+    h3 { font-family: var(--font-h2); font-size: 1rem; font-weight: 600; color: var(--cream); margin: 1.8rem 0 0.4rem; }
+    hr { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
+    p { margin: 0 0 1rem; color: var(--cream-dim); }
+    p:last-child { margin-bottom: 0; }
+    ul, ol { margin: 0 0 1rem; padding-left: 1.4rem; color: var(--cream-dim); }
+    li { margin-bottom: 0.35rem; }
+    li strong { color: var(--cream); }
+
+    code { font-family: var(--font-mono); font-size: 0.82em; color: var(--orange); background: rgba(234,170,0,0.1); padding: 0.1em 0.35em; border-radius: 2px; }
+    pre { background: rgba(0,8,20,0.7); border: 1px solid var(--border); border-left: 3px solid var(--orange-dim); padding: 1rem 1.2rem; margin: 1rem 0 1.2rem; overflow-x: auto; font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.6; color: var(--cream-dim); border-radius: 2px; }
+    pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.86rem; margin: 1rem 0 1.2rem; }
+    th { text-align: left; font-family: var(--font-h2); font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--cream-dim); padding: 0.4rem 0.7rem 0.5rem; border-bottom: 1px solid var(--orange); }
+    td { padding: 0.45rem 0.7rem; border-bottom: 1px solid rgba(234,170,0,0.12); color: var(--cream-dim); vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    td:first-child { font-family: var(--font-mono); font-size: 0.78rem; color: #4FC3F7; white-space: nowrap; }
+
+    @media (max-width: 700px) { .card { margin: 0; border-radius: 0; border-left: none; border-right: none; } }
+  </style>
+</head>
+<body>
+
+  <div class="map-bg"><div id="map-walkthrough"></div></div>
+
+  <div class="card">
+    <a class="back-link" href="../web/index.html">&#8592; Back to Story</a>
+
+    <h1>Technical Walkthrough</h1>
+    <p class="subtitle">A detailed account of the data pipeline, retailer locator processing, road-network distance computation, food desert polygonization, and SNAP participation analysis used to map the collapse of food retail infrastructure in the southern West Virginia coal counties. All code is Python; all inputs are public-domain or open-licensed.</p>
+
+    <h2>1. Data Sources &amp; Acquisition</h2>
+    <p>The pipeline uses seven public or open-licensed datasets. No proprietary feeds or paid API keys are required for core operation.</p>
+    <p><strong>USDA-FNS Historical SNAP Retailer Locator (2005–2025)</strong> is the primary input for every map. The file records every SNAP-authorized retailer that has ever operated in the United States, with authorization date, end date, store category, geocoded address, and a Record ID. It is distributed as a zipped CSV and must be manually placed at <code>data/raw/snap_retailers_2005_2025.zip</code> before the pipeline runs. The pipeline never modifies this file; all transformations are computed at runtime.</p>
+    <p><strong>TIGER/Line 2020 county boundaries</strong> are downloaded directly from the Census Bureau's public file server (<code>tl_2020_us_county.zip</code>) during <code>pipeline.acquire</code>. The file is filtered to WV FIPS <code>54</code> and then to the 19 named study counties.</p>
+    <p><strong>OpenStreetMap via Overpass API</strong> supplies the road network (motorway through unclassified ways, cached at <code>data/raw/osm_roads_overpass.json</code>) and current grocery and dollar-store point locations for supplemental layers. Queries fan across three public mirror endpoints with automatic fallback.</p>
+    <p><strong>Microsoft USBuildingFootprints (West Virginia)</strong> provides ML-extracted building polygons with substantially better rural coverage than OSM alone. The pipeline downloads the state file, filters to the study area bounding box, and clips to county polygons. Approximately 382,000 residential structures survive after filtering.</p>
+    <p><strong>Mapzen/Nextzen Terrain Tiles via AWS Open Data</strong> supply elevation data for the hillshade backdrop. Tiles are fetched as 512&#215;512 float32 GeoTIFFs in Web Mercator at zoom level 9 (~120 m resolution at WV latitude), cached individually to <code>data/raw/terrain_tiles/</code>. No authentication required.</p>
+    <p><strong>U.S. Census Bureau ACS 5-year (2018–2022), Table B22003</strong> provides SNAP household participation rates at the Census tract level, fetched via the Census API without a key. Tract polygons are drawn from TIGER/Line 2022, also fetched directly from Census servers.</p>
+    <p><strong>MSHA Mine Safety and Health Administration open datasets</strong> supply coal employment figures for the coal-decline choropleth. Two pipe-delimited files are downloaded from MSHA's open government data portal: <code>Mines.zip</code> (mine master with county FIPS and commodity type) and <code>MinesProdYearly.zip</code> (annual average employee count and coal production by mine and subunit), joined on <code>MINE_ID</code> and filtered to WV coal commodity.</p>
+    <p>All outputs use EPSG:4326. Distance calculations use EPSG:32617 (UTM Zone 17N).</p>
+
+    <hr>
+
+    <h2>2. Pipeline Overview</h2>
+    <p>The pipeline is a collection of independent Python modules under the <code>pipeline/</code> package, each reading from and writing to <code>data/processed/</code>. Any module can be re-run independently as long as its upstream outputs exist.</p>
+<pre>python -m pipeline.acquire            # county boundaries; OSM grocery and dollar-store points
+python -m pipeline.roads              # OSM road network GeoJSON for visual rendering
+python -m pipeline.retail             # clip OSM grocery points to study area
+python -m pipeline.dollar_store       # clip OSM dollar-store points to study area
+python -m pipeline.grocers_by_year    # SNAP retailer snapshots 2005, 2010, 2015, 2020, 2025
+python -m pipeline.buildings          # residential building footprints + access flags
+python -m pipeline.isochrone          # drive graph build + isochrone generation
+python -m pipeline.buildings_drive    # multi-source Dijkstra drive distances per home
+python -m pipeline.food_deserts       # FNS desert polygon generation, 2005 and 2025
+python -m pipeline.snap               # ACS SNAP participation by Census tract
+python -m pipeline.coal               # MSHA coal employment time-series
+python -m pipeline.population         # decennial population time-series
+python -m pipeline.hillshade          # colored relief PNG from terrain tiles
+python -m pipeline.grocery_history    # CBP grocery establishment counts (supplemental)
+python -m pipeline.health             # HRSA HPSA shortage-area overlay (supplemental)
+python -m pipeline.intervention       # greedy store-placement optimizer (supplemental)
+python -m pipeline.export             # bundle all layers into web_bundle.json</pre>
+    <p>The drive graph built by <code>pipeline.isochrone</code> is cached to <code>data/raw/wv_south_drive.graphml</code>; the initial build takes 2–5 minutes. Subsequent runs load from cache without re-querying Overpass.</p>
+
+    <hr>
+
+    <h2>3. Study Area &amp; County Boundaries</h2>
+    <p>The study area is all West Virginia counties at or south of the latitude of Kanawha County. The canonical list of 19 counties is defined in <code>config.py</code>: Kanawha, Boone, Lincoln, Logan, Mingo, McDowell, Wyoming, Mercer, Summers, Monroe, Greenbrier, Pocahontas, Nicholas, Webster, Braxton, Clay, Roane, Fayette, and Raleigh.</p>
+    <p>Fayette and Raleigh were added beyond the initial draft list as a judgment call — they are core southern coalfield counties (Beckley, Oak Hill, Fayetteville) whose exclusion would materially understate the food-desert footprint. The pipeline documentation explicitly flags this as a discretionary inclusion. TIGER county polygons are filtered to WV FIPS 54 and restricted to the named list. The resulting <code>southern_wv_counties.geojson</code> serves as the clip polygon for every downstream layer.</p>
+
+    <hr>
+
+    <h2>4. SNAP Retailer Locator Processing</h2>
+
+    <h3>Snapshot Construction</h3>
+    <p>The USDA-FNS Historical SNAP Retailer Locator contains one row per authorization event. A store authorized in 2003 and closed in 2011 appears once, with <code>Authorization Date = 2003-xx-xx</code> and <code>End Date = 2011-xx-xx</code>. Five point-in-time snapshots are materialized by retaining records where the authorization date falls on or before January 1 of the snapshot year and either the end date is null or falls on or after that date:</p>
+<pre>snap_dt = pd.Timestamp(f"{year}-01-01")
+active = df[
+    (df["auth_date"].notna()) &amp; (df["auth_date"] &lt;= snap_dt) &amp;
+    ((df["end_date"].isna()) | (df["end_date"] &gt;= snap_dt))
+]
+active = active.drop_duplicates(subset=["Record ID"], keep="first")</pre>
+    <p>Coordinates outside the plausible WV bounding box (latitude 37–41°N, longitude 83–77°W) are dropped as geocoding failures before snapshot construction.</p>
+
+    <h3>Store Category Hierarchy</h3>
+    <p>The FNS file uses a free-text <code>Store Type</code> field. The pipeline retains six categories and excludes all others (convenience stores, pharmacies, farmers markets, wholesalers, specialty stores):</p>
+    <div style="overflow-x:auto">
+    <table>
+      <thead><tr><th>Retained type</th><th>Role in analysis</th></tr></thead>
+      <tbody>
+        <tr><td>Supermarket</td><td>Full-service tier; Dijkstra source for drive-distance and desert calculations</td></tr>
+        <tr><td>Super Store</td><td>Full-service tier; Dijkstra source for drive-distance and desert calculations</td></tr>
+        <tr><td>Large Grocery Store</td><td>Counted in full-service totals; not used as a Dijkstra source</td></tr>
+        <tr><td>Medium Grocery Store</td><td>Counted in full-service totals; not used as a Dijkstra source</td></tr>
+        <tr><td>Small Grocery Store</td><td>Counted in full-service totals; not used as a Dijkstra source</td></tr>
+        <tr><td>Combination Grocery/Other</td><td>Counted in headline totals only; excluded from distance and desert calculations</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p>The headline total climbs from 604 to 987 between 2005 and 2025 solely because USDA expanded SNAP authorization to the Combination/Other tier after 2008. The full-service tier fell from 224 to 159 (&#8722;29%) over the same period. Large grocery stores alone fell from 32 to 12 (&#8722;63%).</p>
+
+    <h3>Replacement Event Detection</h3>
+    <p>The animated Step 2 map distinguishes replacement events from net closures. A closure at a given parcel is classified as a replacement if a different operator opens at the same location (coordinates rounded to three decimal places, ~110 m at WV latitude) within the same five-year window — the dollar-store-takes-the-supermarket-lot pattern. Replacement events are rendered in amber; pure closures in red; pure openings in green.</p>
+
+    <hr>
+
+    <h2>5. Residential Building Footprints</h2>
+    <p>Microsoft USBuildingFootprints are distributed as a state-level GeoJSON. The WV file is filtered to the study area bounding box on download, then clipped to the county boundary polygon via GeoPandas spatial join. Building centroids are derived with <code>.centroid</code> in EPSG:32617 and reprojected to EPSG:4326 for the distance step.</p>
+    <p>Residential classification joins each building centroid to OpenStreetMap building use-tags. Buildings tagged <code>building=yes</code> (unclassified) are retained alongside explicit residential tags (<code>house</code>, <code>residential</code>, <code>apartments</code>, <code>detached</code>, <code>semidetached_house</code>). Commercial, industrial, and civic tags are dropped. Unmatched buildings — those not covered by any OSM polygon — are retained on the assumption that the overwhelming majority of rural structures in the southern coalfield are residential. Centroid longitude and latitude are stored as feature properties in addition to geometry so the export stage can emit compact parallel arrays without re-parsing coordinates.</p>
+
+    <hr>
+
+    <h2>6. Road Network Construction</h2>
+    <p>The drive graph is built by <code>pipeline.isochrone</code> using <code>osmnx</code>. The query polygon is the county union buffered by 0.25 degrees (~25 km) to prevent edge effects at county lines. After download, <code>osmnx.add_edge_speeds()</code> and <code>osmnx.add_edge_travel_times()</code> enrich every edge with speed estimates from posted limits where tagged, or OSM highway-class defaults where not.</p>
+    <p>A separate lighter road GeoJSON for visual rendering is produced by <code>pipeline.roads</code>, which queries Overpass directly for way geometries (motorway through unclassified) and classifies them into four display tiers. The rendering layer and the routing graph are built from the same OSM source but maintained separately: the routing graph needs travel-time attributes and full node topology; the rendering layer needs only line geometries and a road class label. After clipping to the county union polygon, Shapely's <code>intersection</code> can produce stray point or geometry-collection artifacts at boundary tangencies; these are filtered to keep only <code>LineString</code> and <code>MultiLineString</code> types before export.</p>
+
+    <hr>
+
+    <h2>7. Drive-Distance Computation</h2>
+    <p>Drive distances are computed along the actual road network rather than crow-flies. In southern WV terrain, a half-mile of ridge between a home and a closing store can mean fifteen miles of switchbacks — straight-line distance systematically understates the access problem.</p>
+
+    <h3>Graph Simplification</h3>
+    <p><code>pipeline.buildings_drive</code> loads the cached <code>MultiDiGraph</code> and collapses it to a simple undirected <code>nx.Graph</code> weighted by edge length in meters. For any node pair connected by multiple directed edges, only the minimum-length edge is retained. Treating the network as bidirectional is valid for our purpose — computing distance to the nearest store, not modeling one-way traffic — and simple graphs run Dijkstra substantially faster than multigraphs.</p>
+
+    <h3>Multi-Source Dijkstra</h3>
+    <p>Every node with valid <code>x</code>/<code>y</code> attributes is indexed into a <code>scipy.spatial.cKDTree</code> over longitude/latitude coordinates. Active Supermarket and Super Store locations are snapped to graph nodes and de-duplicated. A single NetworkX multi-source Dijkstra traversal from all active store nodes simultaneously produces the shortest road-network distance in meters from every reachable node to its nearest store:</p>
+<pre>dist_by_node = nx.multi_source_dijkstra_path_length(
+    H, sources=set(sm_nodes), weight="length"
+)</pre>
+    <p>Each home's drive distance is the Dijkstra distance at its snapped node plus a haversine residual for the straight-line walk from the building centroid to the snapped node. Buildings whose snapped node is unreachable — disconnected subgraph components, typically isolated private roads — receive a null distance and are excluded from delta calculations and summary statistics.</p>
+
+    <h3>Isochrone Generation</h3>
+    <p><code>pipeline.isochrone</code> generates 15, 30, and 45-minute drive-time polygons using a three-tier fallback. Tier 1 attempts a locally-running Valhalla instance at <code>http://localhost:8002</code>. Tier 2 falls back to the OSMnx ego-graph approach on the cached drive graph: for each store node, <code>nx.ego_graph</code> extracts all nodes reachable within the travel-time radius, and the convex hull of those node coordinates (smoothed with a small buffer-out/buffer-in pass) becomes the isochrone polygon. Tier 3 is a Euclidean buffer at <code>RURAL_AVG_KMH = 48</code> (~30 mph), used as a last resort and labeled <code>buffer_fallback</code> in output properties.</p>
+
+    <hr>
+
+    <h2>8. Per-Home Distance Delta</h2>
+    <p>After Dijkstra runs for 2005 and 2025, the change in driving distance per home is <code>delta = drive_mi_2025 &#8722; drive_mi_2005</code>. Positive values indicate homes that got farther from a full-service grocer; negative values indicate homes that got closer. The delta array is written as a parallel sidecar at <code>data/processed/buildings_drive_distances.json</code> in the same feature order as <code>buildings_residential.geojson</code>, allowing the export stage to join by array index without a spatial merge.</p>
+    <p>The color scale uses a square-root transform on the absolute delta before mapping to the diverging ramp, spreading the common case of modest worsening (0–2 miles) across more of the visual range than a linear scale. The midpoint color is slate grey (<code>#b8c2cc</code>) rather than white to separate it visually from the white road network overlaid on the same map.</p>
+<pre>DELTA_CLAMP = 20.0
+t = sqrt(abs(delta) / DELTA_CLAMP)     # [0, 1], sqrt-scaled
+color = green_scale(t) if delta &lt; 0 else red_scale(t)</pre>
+    <p>Six summary statistics are computed from the delta array and stored in <code>delta_stats</code> for the frontend legend: <code>n_worse_half_mi</code>, <code>median_lost_mi</code>, <code>n_better_half_mi</code>, <code>median_gained_mi</code>, 10th/90th percentiles of the full distribution, and a <code>distance_kind</code> flag ("drive" when the Dijkstra sidecar is present, "crow_flies" on fallback).</p>
+
+    <hr>
+
+    <h2>9. Food Desert Polygonization</h2>
+
+    <h3>Threshold Definition</h3>
+    <p>The FNS dual threshold classifies land as a food desert based on driving distance to the nearest Supermarket or Super Store. The thresholds were calibrated by the USDA Economic Research Service against the National Household Food Acquisition Survey:</p>
+    <ul>
+      <li><strong>Inside a Census Urban Area</strong> (Charleston, Beckley, Bluefield, Huntington fringe): food desert if drive distance exceeds <strong>&#189; mile</strong>. Approximates the distance at which urban shoppers without cars substitute away from full-service stores.</li>
+      <li><strong>Outside Census Urban Areas</strong>: food desert if drive distance exceeds <strong>10 miles</strong>. The round-trip distance at which rural households begin substituting convenience stores for full grocery runs.</li>
+    </ul>
+
+    <h3>Grid Construction &amp; Polygonization</h3>
+    <p>Rather than testing building centroids (which would produce a point cloud), the desert layer is computed on a regular grid at approximately 0.35-mile (~560 m) spacing across the study area so the output can be polygonized into continuous area coverage. Each grid point inherits drive distance from the same multi-source Dijkstra outputs used in Section 7. The boolean mask is rasterized to a GeoTIFF at the grid resolution and polygonized with <code>rasterio.features.shapes</code>:</p>
+<pre>from rasterio.features import shapes
+mask_shapes = list(shapes(desert_mask.astype("uint8"), transform=grid_transform))
+desert_polys = [shape(s) for s, v in mask_shapes if v == 1]</pre>
+    <p>Intersection and difference operations for change classification run on the rasterized masks before polygonization, not on the output polygons, to avoid topological inconsistencies from polygon overlay at this resolution.</p>
+
+    <h3>Change Classification</h3>
+    <p>Three polygon layers are produced by comparing the 2005 and 2025 masks. <strong>Desert disappeared</strong> (blue) covers cells that were desert in 2005 but not in 2025 — areas where a new store brought previously underserved land within threshold distance. <strong>Desert grew</strong> (red) covers cells that became desert between 2005 and 2025 — where store closures pushed previously served land beyond the threshold. <strong>Persistent desert</strong> (purple) covers cells that were desert in both years. The purple persistent category dominates by area, representing land structurally underserved for the full twenty-year study period.</p>
+    <p>Area statistics for the grown and disappeared categories are stored in <code>food_deserts._meta.summary</code> and consumed by the frontend to draw to-scale nested comparison squares in the Step 5 legend panel. Square side lengths are computed at runtime from current map pixels-per-mile so they remain proportionally accurate at any zoom level.</p>
+
+    <hr>
+
+    <h2>10. SNAP Participation Choropleth</h2>
+    <p>SNAP participation rates are drawn from ACS 5-year 2018–2022, Table B22003 (<em>Receipt of Food Stamps/SNAP in the Past 12 Months by Poverty Status</em>), fetched from the Census API without a key. <code>snap_pct = B22003_002E / B22003_001E &#215; 100</code>. Tracts with zero total households or null estimates are dropped. The 193-tract result is joined to TIGER 2022 tract polygons on <code>GEOID</code> and clipped to the study area. TIGER polygons are downloaded directly from Census servers as a zipped shapefile; no local copy is required before the pipeline runs.</p>
+    <p>The r = &#8722;0.56 Pearson correlation between county-level SNAP enrollment rate and supermarkets per 10,000 SNAP households is computed at the county level, not the tract level, to smooth over the high within-county variance in tract-level SNAP rates. It confirms the central claim of Step 6: the places where the most households need SNAP are the same places where the program's intended retail channel is thinnest.</p>
+
+    <hr>
+
+    <h2>11. Terrain &amp; Hillshade</h2>
+    <p>The colored relief backdrop is generated by <code>pipeline.hillshade</code> from Mapzen/Nextzen Terrain Tiles served from AWS Open Data at zoom level 9 (~120 m resolution). Tiles are mosaicked in their native Web Mercator projection with <code>rasterio.merge</code>, reprojected to EPSG:4326 with bilinear resampling, and composited using a custom six-stop hypsometric colormap (deep blue-green valleys &#8594; olive &#8594; tan &#8594; orange ridges &#8594; near-cream peaks).</p>
+    <p>Hillshade is computed at azimuth 315&#176; (northwest sun) and altitude 45&#176;. The compositing formula blends shade and color as <code>rgb &#215; (0.35 + 0.65 &#215; shade)</code>, preventing shadows from going pitch black. The result is alpha-masked to the county union polygon via <code>rasterio.features.geometry_mask</code> and saved as an RGBA PNG alongside a bounds JSON file consumed by Leaflet's <code>imageOverlay</code>.</p>
+
+    <hr>
+
+    <h2>12. Visualization &amp; Export</h2>
+    <p><code>pipeline.export</code> assembles all processed layers into a single <code>web/data/web_bundle.json</code> for the frontend. All polygon layers are simplified with a 0.0005-degree tolerance via <code>shapely.simplify</code> to reduce file size. The grocers-by-year layer uses a raw JSON pass-through rather than GeoPandas serialization to preserve string properties (authorization dates, end dates) that GeoPandas would coerce to Timestamps. A JS shim variant (<code>web_bundle.js</code>) assigns the payload to <code>window.__WV_FOOD_DESERT_BUNDLE__</code> so the page renders when opened via <code>file://</code> without a local server, since browsers block <code>fetch()</code> against file-protocol origins but permit <code>&lt;script src=...&gt;</code>.</p>
+    <p>The residential buildings layer (~382,000 points) is emitted as a separate compact columnar file (<code>buildings_residential.js</code>) — parallel arrays of longitudes, latitudes, and per-home distance deltas rather than GeoJSON features, approximately 3&#215; smaller than an equivalent <code>FeatureCollection</code>. A summary object carrying aggregate statistics is embedded in the main bundle so the frontend legend renders correctly before the heavy file finishes loading.</p>
+    <p>The buildings layer is rendered on an HTML5 Canvas element rather than as SVG circle markers to avoid the DOM overhead that makes 382,000 <code>circleMarker</code> elements unusable. The Step 4 dim transition pre-sorts buildings at build time into a keep-set (homes that got at least half a mile farther, always full opacity) and a fade-set (all others, animated to invisible over 600 ms via <code>requestAnimationFrame</code>) so the worsened homes emerge from the noise of the full dataset rather than snapping into view.</p>
+    <p>Map state is driven entirely by an <code>IntersectionObserver</code> watching each <code>.step</code> element at a 55% intersection threshold. Each step declares a desired layer key set; on step entry the system diffs currently-visible layers against the desired set, fades departing layers 1&#8594;0 via the Web Animations API over 600 ms, then adds entering layers and fades them 0&#8594;1. Hillshade and road panes are never removed from the DOM; their visibility is controlled by CSS opacity transitions on the pane elements rather than Leaflet's <code>setOpacity</code>, which bypasses CSS transitions and would cause snapping instead of easing.</p>
+
+    <a class="back-link-bottom" href="../web/index.html">&#8592; Back to Story</a>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script>
+    const map = L.map("map-walkthrough", {
+      zoomControl: false, scrollWheelZoom: false, doubleClickZoom: false,
+      boxZoom: false, dragging: false, touchZoom: false, keyboard: false
+    }).setView([37.8, -81.4], 8);
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+      attribution: "&copy; OpenStreetMap contributors &copy; CARTO"
+    }).addTo(map);
+  </script>
+</body>
+</html>

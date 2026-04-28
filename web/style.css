@@ -1,0 +1,413 @@
+/* =====================================================================
+   WV Food Desert - WVU Old Gold / Mountaineer Blue design system
+   Map is a fixed full-viewport backdrop; narrative cards float over it.
+   ===================================================================== */
+
+.leaflet-pane.leaflet-grocer-pane path {
+  transition:
+    fill-opacity 600ms ease,
+    stroke-opacity 600ms ease,
+    fill 600ms ease,
+    stroke 600ms ease;
+}
+
+:root {
+  
+  --orange: #EAAA00;          
+  --orange-deep: #C99700;     
+  --orange-dim: #8A6B00;      
+  --cream: #F4F1E8;           
+  --cream-dim: #BFC8D4;       
+  --text-dark: #001833;
+  --bg: #001026;              
+  --surface: #002855;         
+  --border: rgba(234, 170, 0, 0.34);
+  --panel-bg: rgba(0, 16, 38, 0.82);
+
+  --font-h1: "Bahnschrift SemiBold", "Segoe UI", system-ui, sans-serif;
+  --font-h2: "Bahnschrift SemiCondensed", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Bahnschrift Light", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", monospace;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  color: var(--cream);
+  font-family: var(--font-body);
+  line-height: 1.5;
+  background:
+    radial-gradient(circle at 12% 15%, #002f6c 0%, transparent 35%),
+    radial-gradient(circle at 88% 88%, #001a3d 0%, transparent 35%),
+    linear-gradient(165deg, #00081a 0%, #001026 30%, #002148 100%);
+}
+
+a { color: var(--orange); text-decoration: none; }
+a:hover { color: var(--cream); }
+
+/* ---------- Hero ---------- */
+.hero {
+  min-height: 100vh;
+  min-height: 100svh;
+  position: relative;
+  z-index: 3;
+  display: grid;
+  place-items: end start;
+  padding: 10vh 6vw 8vh;
+  background:
+    radial-gradient(circle at 14% 16%, rgba(0, 60, 130, 0.55) 0%, transparent 38%),
+    radial-gradient(circle at 86% 84%, rgba(234, 170, 0, 0.18) 0%, transparent 42%),
+    linear-gradient(160deg, #00081a 0%, #001a3d 45%, #002148 100%);
+  border-bottom: 1px solid var(--border);
+}
+
+.hero h1 {
+  margin: 0;
+  font-family: var(--font-h1);
+  font-size: clamp(2rem, 5vw, 4.5rem);
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  max-width: 22ch;
+  color: var(--cream);
+}
+
+.hero p {
+  margin-top: 1rem;
+  max-width: 62ch;
+  color: var(--cream-dim);
+  font-size: clamp(1rem, 1.4vw, 1.2rem);
+}
+
+.accent { color: var(--orange); font-weight: 700; }
+
+.scroll-cue {
+  position: absolute;
+  left: 50%;
+  bottom: 1.25rem;
+  transform: translateX(-50%);
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--cream-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.72rem;
+}
+.scroll-cue:hover { color: var(--cream); }
+.scroll-cue-arrow {
+  width: 12px; height: 12px;
+  border-right: 2px solid var(--orange);
+  border-bottom: 2px solid var(--orange);
+  transform: rotate(45deg);
+  animation: cue-bounce 1.3s ease-in-out infinite;
+}
+@keyframes cue-bounce {
+  0%, 100% { transform: rotate(45deg) translateY(0); }
+  50%      { transform: rotate(45deg) translateY(4px); }
+}
+
+/* ---------- Story layout (full-bleed map + floating cards) ---------- */
+.story {
+  display: block;
+  background: transparent;
+}
+
+.left {
+  background: transparent;
+  padding: 0;
+  position: relative;
+  z-index: 2;
+  pointer-events: none;
+}
+.left .step { pointer-events: auto; }
+
+.right {
+  background: transparent;
+  position: static;
+  display: contents;
+}
+
+/* ---------- Fixed full-viewport map backdrop ---------- */
+.map-shell {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  z-index: 1;
+}
+#map {
+  height: 100%;
+  width: 100%;
+  filter: saturate(0.95) contrast(1.05);
+}
+.leaflet-container { background: #00081a; }
+
+/* ---------- Steps (floating cards over the map) ----------
+   .step is a transparent scroll-pacing container (full viewport tall).
+   .step-card is the visible panel: constrained, anchored left, centered
+   vertically inside its step. */
+.step {
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  background: transparent;
+  border-left: none;
+  transition: none;
+}
+.step-card {
+  margin-left: 4vw;
+  max-width: 920px;
+  width: min(920px, calc(100vw - 8vw));
+  padding: 1.4rem 1.5rem;
+  background: rgba(0, 16, 38, 0.82);
+  border-left: 2px solid transparent;
+  border-radius: 4px;
+  backdrop-filter: blur(6px) saturate(1.05);
+  -webkit-backdrop-filter: blur(6px) saturate(1.05);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.55);
+  transition: background 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
+}
+.step .eyebrow {
+  font-family: var(--font-h1);
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--orange);
+  margin-bottom: 0.55rem;
+}
+.step h2 {
+  font-family: var(--font-h2);
+  font-size: clamp(1.4rem, 2.5vw, 2.4rem);
+  margin: 0 0 0.75rem;
+  line-height: 1.08;
+  color: var(--cream);
+}
+.step p {
+  margin: 0;
+  color: var(--cream-dim);
+  max-width: 80ch;
+}
+.step.active > .step-card {
+  background: rgba(0, 16, 38, 0.9);
+  border-left-color: var(--orange);
+}
+
+/* ---------- Metrics ---------- */
+.metrics {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1000;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  padding: 0.75rem 0.9rem;
+  min-width: 220px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.metrics h3 {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-h2);
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--cream-dim);
+}
+.metric-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.92rem;
+  font-family: var(--font-mono);
+  margin: 0.3rem 0;
+}
+.metric-row strong { color: var(--orange); font-weight: 600; }
+
+/* ---------- Legend ---------- */
+.bottom-stack {
+  position: fixed;
+  right: 1rem;
+  bottom: calc(1rem + 10px);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  min-width: 220px;
+  max-width: 320px;
+  pointer-events: none;
+}
+.bottom-stack > * { pointer-events: auto; }
+.bottom-stack:not(:has(.legend:not(:empty))):not(:has(.area-squares:not([hidden]))) {
+  display: none;
+}
+
+.legend {
+  position: static;
+  background: transparent;
+  border: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  padding: 0.75rem 0.9rem;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  color: var(--cream);
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+}
+.legend:empty { display: none; }
+.area-squares {
+  background: transparent;
+  border: none;
+  padding: 0.6rem 0.75rem 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--cream);
+}
+.area-squares[hidden] { display: none !important; }
+.area-squares h4 {
+  margin: 0 0 0.4rem;
+  font-family: var(--font-h2);
+  font-size: 0.85rem;
+  color: var(--cream);
+  letter-spacing: 0.02em;
+}
+.area-squares .sq-stage {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  margin: 0.4rem auto 0.5rem;
+}
+.area-squares .sq-grown,
+.area-squares .sq-disappeared {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  box-sizing: border-box;
+}
+.area-squares .sq-grown {
+  background: rgba(224, 58, 58, 0.40);
+  border: 1px solid #E03A3A;
+}
+.area-squares .sq-disappeared {
+  background: rgba(63, 169, 245, 0.40);
+  border: 1px solid #3FA9F5;
+}
+.area-squares .sq-rows {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.15rem 0.5rem;
+  font-size: 0.72rem;
+  line-height: 1.3;
+}
+.area-squares .sq-swatch {
+  width: 9px;
+  height: 9px;
+  display: inline-block;
+  align-self: center;
+  border: 1px solid var(--border);
+}
+.area-squares .sq-val { color: var(--orange); font-weight: 600; text-align: right; }
+.area-squares .sq-foot {
+  margin-top: 0.4rem;
+  font-size: 0.68rem;
+  color: var(--cream-dim);
+  line-height: 1.3;
+}
+.legend h4 {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-h2);
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--cream-dim);
+}
+.legend-group + .legend-group {
+  margin-top: 0.55rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed var(--border);
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0.2rem 0;
+  line-height: 1.25;
+}
+.swatch {
+  flex-shrink: 0;
+  width: 14px; height: 14px;
+  border-radius: 2px;
+  border: 1px solid rgba(255, 245, 237, 0.15);
+}
+.swatch.dot { border-radius: 50%; }
+.swatch.line { height: 3px; border: 0; border-radius: 0; }
+.swatch.dashed { height: 0; border-top: 2px dashed; background: transparent !important; }
+
+/* ---------- Colophon step ---------- */
+.step.colophon {
+  min-height: 0;
+  padding: 8vh 0;
+}
+.step.colophon > .step-card {
+  background: rgba(0, 16, 38, 0.92);
+  border-left-color: var(--orange-dim);
+}
+.step.colophon h2 { margin-bottom: 0.6rem; }
+.colophon-grid {
+  margin: 1.25rem 0 0;
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  column-gap: 1.1rem;
+  row-gap: 0.55rem;
+  font-size: 0.82rem;
+  font-family: var(--font-mono);
+}
+.colophon-grid dt {
+  color: var(--cream-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.72rem;
+  padding-top: 0.15rem;
+}
+.colophon-grid dd { margin: 0; color: var(--cream); }
+.colophon-grid dd a {
+  color: var(--orange);
+  border-bottom: 1px dotted var(--orange-dim);
+}
+.colophon-grid dd a:hover { color: var(--cream); border-bottom-color: var(--orange); }
+.colophon-grid code { font-family: inherit; color: var(--cream); }
+
+/* ---------- Mobile ---------- */
+@media (max-width: 980px) {
+  .map-shell { height: 100vh; width: 100vw; }
+  .left { padding-bottom: 12vh; }
+  .step {
+    min-height: 86vh;
+    padding: 10vh 0 10vh 4vw;
+  }
+  .step > * {
+    max-width: calc(100vw - 8vw);
+    width: calc(100vw - 8vw);
+  }
+  .scroll-cue { bottom: 0.9rem; }
+  .metrics, .legend { min-width: 180px; }
+}
+
+.relief-shadow { mix-blend-mode: multiply; }
+
