@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+
+# Data — large/raw artifacts not committed (anchored to repo root)
+/data/raw/
+/data/processed/*
+!/data/processed/.gitkeep
+!/data/processed/*_summary.json
+
+# Valhalla tiles
+valhalla_tiles/
+*.osm.pbf
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Build / dist
+dist/
+build/
+*.log
